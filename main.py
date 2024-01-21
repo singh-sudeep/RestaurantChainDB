@@ -1,36 +1,44 @@
-from menu import Menu
-from restaurantchain import RestaurantChain
-from restaurant_database import RestaurantDatabase
+from app import RestaurantDatabase
+
+
+def search_product(product_id):
+  product = RestaurantDatabase.products.find_one({'_id': product_id})
+  if product:
+    chain = RestaurantDatabase.chains.find_one({'_id': product['chain_id']})['name'] 
+    print(f"Name: {product['name']}") 
+    print(f"Description: {product['description']}")
+    print(f"Price: {product['price']}")
+    print(f"Chain: {chain}")
+  else:
+    print("Product not found")
 
 
 def main():
+    DATA_FOLDER = 'data_folder'
+    restaurant_db = RestaurantDatabase()
 
 
-    restaurantdb = RestaurantDatabase()
-    restaurantdb.load_data_from_json()
-
-    print("Welcome to the Resturant Database Management System")
-
-
+    print("Welcome to the restaurant database!")
     while True:
-        print("1. Search Product")
-        print("2. Get Product Detail")
-        print("3: Exit")
+        print("1. Search for products by product ID")
+        print("2. Display detailed information about a product")
+        print("3. Load Data")
+        print("4. Exit")
 
-        choice = int(input("Enter the operation you want to perform: "))
+        choice = input("Enter your choice: ")
 
-        if choice == 1:
-            product_id = input("Enter the product_id to search: ")
-            product = restaurantdb.search_product(product_id)
+        if choice == '1':
+            product_id = input("Enter product ID: ")
+            result = restaurant_db.search_product(product_id)
+            print(result)
 
-        if choice == 2:
-            product_id = input("Enter the product_id to search: ")
-            restaurantdb.get_product_details(product_id)
-
-        if  choice == 3:
+        elif choice == '2':
             break
+        
+        elif choice == '3':
+          RestaurantDatabase.load_data(DATA_FOLDER)
 
-    print('Good bye!')
+    print('Goodbye!')
 
 
 if __name__ == "__main__":
