@@ -1,11 +1,11 @@
 import os
 import json
-from pprint import pprint 
 from pymongo import MongoClient
 
 
 class RestaurantChain:
-    def __init__(self, chain_name, location):
+    def __init__(self, chain_id, chain_name, location):
+        self.chain_id = chain_id
         self.chain_name = chain_name
         self.location = location
         self.products = []
@@ -15,9 +15,10 @@ class RestaurantChain:
 
     def to_dict(self):
         return {
+            'chain_id': self.chain_id,
             'chain_name': self.chain_name,
             'location': self.location,
-            'product_ids': [product.product_id for product in self.products]
+            'products': [product.to_dict() for product in self.products]
         }
 
 
@@ -49,34 +50,55 @@ class RestaurantDatabase:
         self.restaurant_collection = self.db['restaurant']
 
     def insert_restaurant_chain(self, restaurant_chain):
+        # To insert restaurant_chain document into MongoDB
         restaurant_doc = restaurant_chain.to_dict()
-        restaurant_id = self.restaurant_collection.insert_one(restaurant_doc).inserted_id
+        self.restaurant_collection.insert_one(restaurant_doc)
 
-        for product in restaurant_chain.products:
-            product.save_to_file()
-            self.restaurant_collection.update_one(
-                {'_id': restaurant_id},
-                {'$addToSet': {'product_files': f'{product.product_id}.json'}}
-            )
-    
     def search_product(self, product_id):
-        return self.product_collection.find_one({'product_id': product_id})
+        # For searching product across different stores based on product_id
+        return self.restaurant_collection.find_one({'products.product_id': product_id})
 
-    @classmethod
-    def load_data(cls, data_folder):
+    def load_data(self, data_folder):
         for restaurant_file in os.listdir(data_folder):
             with open(os.path.join(data_folder, restaurant_file), 'r') as file:
                 data = json.load(file)
-                stores = data.get('stores')
-                for store_info in stores:
-                    restaurant_chain = RestaurantChain(store_info['name'], store_info['address'])
-                    for menu in store_info['menus']:
+                chain_id = data.get('_id')
+                chain_name = data.get('name')
+                location = data.get('address')
+
+                restaurant_chain = RestaurantChain(chain_id, chain_name, location)
+
+                for menu in data.get('menus', []):
+                    for category in menu.get('categories', []):
+                        for menu_item in category.get('menu_item_list', []):
                             product = Product(
-                                menu['product_id'],
-                                menu['name'],
-                                menu['description'],
-                                menu['price']
+                                menu_item['product_id'],
+                                menu_item['name'],
+                                menu_item['description'],
+                                menu_item.get('formatted_price', 0)
                             )
                             restaurant_chain.add_product(product)
-                    break
-                cls.insert_restaurant_chain(restaurant_chain)
+
+                # To save product information as JSON files with product IDs as filenames
+                for product in restaurant_chain.products:
+                    product.save_to_file()
+
+                # To Insert restaurant_chain document into MongoDB
+                self.insert_restaurant_chain(restaurant_chain)
+
+
+if __name__ == "__main__":
+    data_folder_path = "data_folder"
+    restaurant_db = RestaurantDatabase()
+
+    # Load and insert data into MongoDB
+    restaurant_db.load_data(data_folder_path)
+
+    # Search for products by product ID
+    product_id_to_search = "your_product_id"
+    result = restaurant_db.search_product(product_id_to_search)
+
+    if result:
+        print(f"Product found: {result['products'][0]['name']}")
+    else:
+        print("Product not found")
