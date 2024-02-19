@@ -1,0 +1,45 @@
+{
+    "stores":[
+        {
+            '_id',
+            'name',
+            'phone_number',
+            'address',
+            'type',
+            'description',
+            'local_hours',
+            'cuisines',
+            'food_photos',
+            'logo_photos',
+            'store_photos',
+            'dollar_signs',
+            'pickup_enabled',
+            'delivery_enabled',
+            'offers_first_party_delivery',
+            'offers_third_party_delivery',
+            'weighted_rating_value',
+            'aggregated_rating_count',
+            'supports_upc_codes',
+            'is_open',
+            'menu_id'
+            'menus',
+        }
+    ]
+}
+
+
+keys_in_menu_item_list = {
+    'name',
+    'unit_size',
+    'unit_of_measurement',
+      'description',
+        'delivery_price',
+          'delivery_min_price',
+            'pickup_price',
+              'pickup_min_price',
+                'customizations',
+                  'formatted_price',
+                    'product_id',
+                      'should_fetch_customizations',
+                        'supports_image_scaling'
+}
